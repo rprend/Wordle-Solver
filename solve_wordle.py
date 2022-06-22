@@ -39,8 +39,6 @@ def passes_constraints(word, constraints):
 
     # To test a constraint. There is a naive solution where we do a nested loop: go over each constraint, then
     # go over each letter, and if one fails we return false. Let's program that, we can be fancy later.
-    # print(word)
-    # print(constraints)
 
     # Note that we use capital letters for Constraints, and lower case for the letters
     # themselves.
@@ -62,7 +60,7 @@ def passes_constraints(word, constraints):
                 return False
             # Yellow, must be in the word
             if straint_type == 'Y' and straint_letter not in word:
-                return FALSE
+                return False
 
             # greeN, must contain in this spot.
             if straint_type == 'N' and letter != straint_letter:
@@ -73,10 +71,80 @@ def passes_constraints(word, constraints):
 
     return True
 
+def calculate_word_value(letter_hierarchy, word):
+    value = 0
+    for letter in word:
+        value += letter_hierarchy[letter]
+    return value
+
+def find_constraints(guess, answer):
+    constraint = []
+    for idx in range(len(guess)):
+        letter = guess[idx]
+        correct_letter = answer[idx]
+
+        constraint.append(letter)
+
+
+        if letter not in answer:
+            constraint.append("G")
+        elif letter != correct_letter:
+            constraint.append("Y")
+        else:
+            constraint.append("N")
+    return "".join(constraint)
+
+# The routine for generating a guess is as follows:
+# First, filter out the list of words, removing any that do not pass the constraints.
+# Next, calculate the letter hierarchy score for each word, sorting that list.
+# Finally, return the best word.
+def generate_guess(possible_guesses, constraints, letter_hierarchy):
+    filtered_guess = list(filter(lambda word: passes_constraints(word, constraints), possible_guesses))
+    print(len(filtered_guess))
+    best_guesses = sorted(filtered_guess, key=lambda word: calculate_word_value(letter_hierarchy, word), reverse=True)
+
+    return best_guesses
+
+
 def main():
     allowed_guesses, wordle_answers = get_wordle_data()
+    all_words = allowed_guesses + wordle_answers
 
     letter_hierarchy = generate_letter_hierarchy("".join(wordle_answers))
 
-    print(passes_constraints("magic", ["mNoGoGoGrG"]))
-main()
+    filtered_words = all_words
+
+    print("Welcome to Wordle!")
+    random_answer = "awful"
+    constraints = []
+
+    print("Select input mode: 'S' to help with the site. Otherwise will play a game.")
+    input_mode = input("Input Mode: ")
+
+    if input_mode == 'S':
+        for round in range(6):
+            filtered_words = generate_guess(filtered_words, constraints, letter_hierarchy)
+            best_guesses = filtered_words[:10]
+            print("Hints: " + str(best_guesses))
+            guess_results = input("Round " + str(round + 1) + " Guess: ")
+
+            constraints.append(guess_results)
+            print(constraints)
+
+        return
+    for round in range(6):
+        filtered_words = generate_guess(filtered_words, constraints, letter_hierarchy)
+        best_guesses = filtered_words[:10]
+        print("Hints: " + str(best_guesses))
+        guess = input("Round " + str(round + 1) + " Guess: ")
+        # while guess not in all_words:
+        #     print("Invalid guess")
+        #     guess = input("Round " + str(round + 1) + " Guess: ")
+        answer = find_constraints(guess, random_answer)
+        constraints.append(answer)
+        print(constraints)
+
+
+
+if __name__ == "__main__":
+    main()
